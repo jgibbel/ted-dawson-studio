@@ -63,7 +63,7 @@ export default function Lightbox({ images, index, onClose, onPrev, onNext }) {
         onTouchStart={(e) => e.stopPropagation()}
         onTouchEnd={(e) => e.stopPropagation()}
       >
-        <img key={index} src={`/${images[index]}`} alt="" className={`lightbox-img lightbox-img--${direction}`} />
+        <img key={index} src={`${import.meta.env.BASE_URL}${images[index]}`} alt="" className={`lightbox-img lightbox-img--${direction}`} />
       </div>
 
       <button

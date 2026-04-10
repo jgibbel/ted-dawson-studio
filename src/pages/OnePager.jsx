@@ -141,7 +141,7 @@ export default function OnePager({ onNavOpacity }) {
     <>
       <div id="home" className="hero-full" ref={heroRef}>
         <img
-          src="/assets/IMG_3883+BTrevor+16x20-df8feef6.png"
+          src={`${import.meta.env.BASE_URL}assets/IMG_3883+BTrevor+16x20-df8feef6.png`}
           className="hero-bg-img"
           alt=""
         />
@@ -186,7 +186,7 @@ export default function OnePager({ onNavOpacity }) {
             <Link key={book.slug} to={`/${book.slug}`} className="index-card"
               onClick={() => sessionStorage.setItem('onepager-scroll', window.scrollY)}>
               <div className="index-card-image">
-                <img src={`/${book.cover}`} alt={book.title} loading="lazy" />
+                <img src={`${import.meta.env.BASE_URL}${book.cover}`} alt={book.title} loading="lazy" />
               </div>
               <p className="index-card-title">{book.title}</p>
             </Link>
@@ -200,7 +200,7 @@ export default function OnePager({ onNavOpacity }) {
             <Link key={pub.slug} to={`/${pub.slug}`} className="index-card"
               onClick={() => sessionStorage.setItem('onepager-scroll', window.scrollY)}>
               <div className="index-card-image">
-                <img src={`/${pub.cover}`} alt={pub.title} loading="lazy" />
+                <img src={`${import.meta.env.BASE_URL}${pub.cover}`} alt={pub.title} loading="lazy" />
               </div>
               <p className="index-card-title">{pub.title}</p>
             </Link>

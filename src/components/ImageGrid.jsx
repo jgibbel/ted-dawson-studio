@@ -31,7 +31,7 @@ export default function ImageGrid({ images, tight = false, uniform = false }) {
             className="image-grid-item"
             onClick={() => setLightboxIndex(i)}
           >
-            <LazyImage src={`/${src}`} alt="" />
+            <LazyImage src={`${import.meta.env.BASE_URL}${src}`} alt="" />
           </div>
         ))}
       </div>

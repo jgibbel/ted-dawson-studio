@@ -26,7 +26,7 @@ export default function Layout({ children, navOpacity }) {
       >
         <div className="nav-inner">
           <Link to="/" className="nav-logo" onClick={() => { setMenuOpen(false); window.scrollTo({ top: 0, behavior: 'instant' }) }}>
-            <img src="/assets/Ted+portrait-33746941.jpg" alt="Ted Dawson Studio" className="nav-logo-img" />
+            <img src={`${import.meta.env.BASE_URL}assets/Ted+portrait-33746941.jpg`} alt="Ted Dawson Studio" className="nav-logo-img" />
           </Link>
           <ul className={`nav-links${menuOpen ? ' open' : ''}`}>
             {navLinks.map(({ hash: id, label }) => (
