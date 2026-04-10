@@ -17,63 +17,54 @@ function Section({ id, title, children }) {
 const VIEWBOX_H = 110
 const THRESHOLD = 0.5   // image bottom triggers fall when it crosses this fraction of vh
 
-function useScrollEffect(heroRef, titleRef, restoringScroll) {
+function useScrollEffect(heroRef, heroImgRef, titleRef, restoringScroll) {
   const [s, setS] = useState(() =>
     restoringScroll
       ? { svgStyle: { position: 'relative', opacity: 1 }, spacerH: 0, clipYSvg: 0, landed: true }
-      : { svgStyle: { position: 'fixed', top: 9999, left: 0, opacity: 1 }, spacerH: 0, clipYSvg: VIEWBOX_H, landed: false }
+      : { svgStyle: { position: 'fixed', top: 9999, left: '50%', transform: 'translateX(-50%)', opacity: 1 }, spacerH: 0, clipYSvg: VIEWBOX_H, landed: false }
   )
 
   useEffect(() => {
     const update = () => {
       const heroEl  = heroRef.current
+      const imgEl   = heroImgRef.current
       const titleEl = titleRef.current
       if (!heroEl || !titleEl) return
 
       const heroTop = heroEl.offsetTop   // accounts for nav height
-      const heroH   = heroEl.offsetHeight
+      // Use actual image height so the effect triggers at the real image bottom,
+      // not the min-height of the hero div (which can be much taller on mobile)
+      const heroH   = imgEl ? imgEl.offsetHeight : heroEl.offsetHeight
       const titleH  = titleEl.getBoundingClientRect().height || (window.innerWidth * VIEWBOX_H / 1000)
       const vh      = window.innerHeight
       const scrollY = window.scrollY
 
       // Image bottom position in viewport coordinates
       const imageBotVP = heroTop + heroH - scrollY
+      const fixedStyle = { position: 'fixed', left: '50%', transform: 'translateX(-50%)', opacity: 1 }
 
-      // Phase boundaries
-      const fixedTop    = THRESHOLD * vh - titleH         // where SVG pins during the split
-      const startScroll = heroTop + heroH - THRESHOLD * vh // image bottom reaches 50vh
-      const endScroll   = heroTop + heroH - fixedTop       // image bottom clears SVG top
-
-      if (imageBotVP > vh) {
-        // Phase 0: image bottom still below viewport — SVG waits at viewport bottom
+      if (imageBotVP >= vh) {
+        // Phase 0: image bottom below viewport — SVG waits at viewport bottom, all white
         setS({
-          svgStyle: { position: 'fixed', top: vh - titleH, left: 0, opacity: 1 },
+          svgStyle: { ...fixedStyle, top: vh - titleH },
           spacerH: 0,
           clipYSvg: VIEWBOX_H,
           landed: false,
         })
-      } else if (scrollY <= startScroll) {
-        // Phase 1: SVG tracks image bottom from viewport bottom up to 50vh, all white
+      } else if (imageBotVP > THRESHOLD * vh) {
+        // Phase 1: image bottom travels from viewport bottom (vh) to 50vh.
+        // k goes 1→0 over that range.
+        // svgTop = imageBotVP - k*titleH ensures the split is always colinear with imageBotVP.
+        // clipYSvg = k*VIEWBOX_H → all white→black as k→0.
+        const k = (imageBotVP - THRESHOLD * vh) / (vh - THRESHOLD * vh)
         setS({
-          svgStyle: { position: 'fixed', top: imageBotVP - titleH, left: 0, opacity: 1 },
-          spacerH: 0,
-          clipYSvg: VIEWBOX_H,
-          landed: false,
-        })
-      } else if (scrollY < endScroll) {
-        // Phase 2: SVG fixed at 50vh, image slides away, split colour advances upward
-        const progress  = (scrollY - startScroll) / (endScroll - startScroll)
-        const clipYPx   = imageBotVP - fixedTop
-        const clipYSvg  = Math.max(0, Math.min(VIEWBOX_H, (clipYPx / titleH) * VIEWBOX_H))
-
-        setS({
-          svgStyle: { position: 'fixed', top: fixedTop, left: 0, opacity: 1 },
-          spacerH: progress * titleH,
-          clipYSvg,
+          svgStyle: { ...fixedStyle, top: imageBotVP - k * titleH },
+          spacerH: (1 - k) * titleH,
+          clipYSvg: k * VIEWBOX_H,
           landed: false,
         })
       } else {
-        // Phase 3: landed in document flow, all black
+        // Phase 2: landed in document flow, all black
         setS({
           svgStyle: { position: 'relative', opacity: 1 },
           spacerH: 0,
@@ -90,7 +81,7 @@ function useScrollEffect(heroRef, titleRef, restoringScroll) {
       window.removeEventListener('scroll', update)
       window.removeEventListener('resize', update)
     }
-  }, [heroRef, titleRef])
+  }, [heroRef, heroImgRef, titleRef])
 
   return s
 }
@@ -98,11 +89,16 @@ function useScrollEffect(heroRef, titleRef, restoringScroll) {
 export default function OnePager() {
   const { hash } = useLocation()
   const navType  = useNavigationType()
-  const heroRef  = useRef(null)
-  const titleRef = useRef(null)
+  const heroRef    = useRef(null)
+  const heroImgRef = useRef(null)
+  const titleRef   = useRef(null)
   // Peek at sessionStorage once at mount — non-null means we're restoring a back-nav position
   const [restoringScroll] = useState(() => sessionStorage.getItem('onepager-scroll') !== null)
-  const { svgStyle, spacerH, clipYSvg, landed } = useScrollEffect(heroRef, titleRef, restoringScroll)
+  const { svgStyle, spacerH, clipYSvg, landed } = useScrollEffect(heroRef, heroImgRef, titleRef, restoringScroll)
+  const spacerHRef = useRef(spacerH)
+  const landedRef  = useRef(landed)
+  useEffect(() => { spacerHRef.current = spacerH }, [spacerH])
+  useEffect(() => { landedRef.current  = landed  }, [landed])
 
   // On back-navigation, restore the exact scroll position saved before leaving
   useLayoutEffect(() => {
@@ -119,7 +115,14 @@ export default function OnePager() {
     if (navType === 'POP') return
     if (hash) {
       const el = document.querySelector(hash)
-      if (el) el.scrollIntoView({ behavior: 'instant' })
+      if (el) {
+        const navH   = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--nav-height'), 10) || 100
+        const titleH = titleRef.current ? titleRef.current.getBoundingClientRect().height : 0
+        // el.offsetTop includes current spacerH. Final layout has titleH in that space.
+        // Adjust by the difference so we land at the correct post-transition position.
+        const adjustment = landedRef.current ? 0 : titleH - spacerHRef.current
+        window.scrollTo({ top: el.offsetTop - navH + adjustment, behavior: 'instant' })
+      }
     } else {
       window.scrollTo({ top: 0, behavior: 'instant' })
     }
@@ -139,6 +142,7 @@ export default function OnePager() {
     <>
       <div id="home" className="hero-full" ref={heroRef}>
         <img
+          ref={heroImgRef}
           src={`${import.meta.env.BASE_URL}assets/IMG_3883+BTrevor+16x20-df8feef6.png`}
           className="hero-bg-img"
           alt=""
@@ -146,7 +150,7 @@ export default function OnePager() {
       </div>
 
       {/* Spacer grows to push illustrations down during fall; collapses once landed */}
-      <div style={landed ? {} : { height: spacerH }}>
+      <div style={landed ? {} : { height: spacerH }} className="hero-title-wrapper">
         <svg
           ref={titleRef}
           className="hero-title-svg"

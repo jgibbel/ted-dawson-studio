@@ -325,21 +325,31 @@ img {
 
 .hero-full {
   position: relative;
-  min-height: 100vh; /* reserves space before image loads so hash scrolls land correctly */
+  max-width: var(--max-width);
+  margin: 0 auto;
 }
 
 .hero-bg-img {
   display: block;
   width: 100%;
+  max-width: var(--max-width);
   height: auto;
+  margin: 0 auto;
+}
+
+.hero-title-wrapper {
+  max-width: var(--max-width);
+  margin: 0 auto;
 }
 
 .hero-title-svg {
   display: block;
   width: 100%;
+  max-width: var(--max-width);
   /* height determined by viewBox aspect ratio (110/1000) */
   /* position, top, left, color, opacity all driven by inline style */
 }
+
 
 /* ---- Home (unused now but kept for fallback) ---- */
 
