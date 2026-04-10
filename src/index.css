@@ -252,6 +252,16 @@ img {
   pointer-events: none;
 }
 
+.lightbox-overlay--light {
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.lightbox-overlay--light .lightbox-close,
+.lightbox-overlay--light .lightbox-prev,
+.lightbox-overlay--light .lightbox-next {
+  color: black;
+}
+
 .lightbox-content {
   position: relative;
   max-width: 90vw;

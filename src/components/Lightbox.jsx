@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useRef, useState } from 'react'
 
-export default function Lightbox({ images, index, onClose, onPrev, onNext }) {
+export default function Lightbox({ images, index, onClose, onPrev, onNext, light = false }) {
   const [closing, setClosing] = useState(false)
   const [direction, setDirection] = useState('next')
   const mouseDownPos = useRef(null)
@@ -46,7 +46,7 @@ export default function Lightbox({ images, index, onClose, onPrev, onNext }) {
 
   return (
     <div
-      className={`lightbox-overlay${closing ? ' lightbox-overlay--closing' : ''}`}
+      className={`lightbox-overlay${closing ? ' lightbox-overlay--closing' : ''}${light ? ' lightbox-overlay--light' : ''}`}
       onMouseDown={(e) => { mouseDownPos.current = { x: e.clientX, y: e.clientY } }}
       onClick={(e) => {
         if (!mouseDownPos.current) return

@@ -14,7 +14,7 @@ function LazyImage({ src, alt }) {
   )
 }
 
-export default function ImageGrid({ images, tight = false, uniform = false }) {
+export default function ImageGrid({ images, tight = false, uniform = false, light = false }) {
   const [lightboxIndex, setLightboxIndex] = useState(null)
 
   const prev = () =>
@@ -42,6 +42,7 @@ export default function ImageGrid({ images, tight = false, uniform = false }) {
           onClose={() => setLightboxIndex(null)}
           onPrev={prev}
           onNext={next}
+          light={light}
         />
       )}
     </>

@@ -207,7 +207,7 @@ export default function OnePager() {
       </Section>
 
       <Section id="identities" title="Identities">
-        <ImageGrid images={identityImages} uniform />
+        <ImageGrid images={identityImages} uniform light />
       </Section>
 
       <Section id="about" title="About">
