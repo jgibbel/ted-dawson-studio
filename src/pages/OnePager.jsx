@@ -19,11 +19,9 @@ const THRESHOLD = 0.5   // image bottom triggers fall when it crosses this fract
 
 function useScrollEffect(heroRef, titleRef, restoringScroll) {
   const [s, setS] = useState(() =>
-    // If restoring a saved scroll position the page will land in phase 3.
-    // Start there immediately so sections don't jump after the first paint.
     restoringScroll
       ? { svgStyle: { position: 'relative', opacity: 1 }, spacerH: 0, clipYSvg: 0, landed: true }
-      : { svgStyle: { position: 'fixed', top: -400, left: 0, opacity: 0 }, spacerH: 0, clipYSvg: VIEWBOX_H, landed: false }
+      : { svgStyle: { position: 'fixed', top: 9999, left: 0, opacity: 1 }, spacerH: 0, clipYSvg: VIEWBOX_H, landed: false }
   )
 
   useEffect(() => {
@@ -32,39 +30,41 @@ function useScrollEffect(heroRef, titleRef, restoringScroll) {
       const titleEl = titleRef.current
       if (!heroEl || !titleEl) return
 
+      const heroTop = heroEl.offsetTop   // accounts for nav height
       const heroH   = heroEl.offsetHeight
       const titleH  = titleEl.getBoundingClientRect().height || (window.innerWidth * VIEWBOX_H / 1000)
       const vh      = window.innerHeight
       const scrollY = window.scrollY
 
-      // Text fades in slower — by the time image bottom is ~10% above bottom of screen
-      const fadeEnd = Math.max(heroH - vh * 0.9, heroH * 0.2)
+      // Image bottom position in viewport coordinates
+      const imageBotVP = heroTop + heroH - scrollY
 
-      // Scroll positions that bound the three phases
-      const fixedTop    = THRESHOLD * vh - titleH
-      const startScroll = Math.max(heroH - THRESHOLD * vh, 0)
-      const endScroll   = heroH - fixedTop
+      // Phase boundaries
+      const fixedTop    = THRESHOLD * vh - titleH         // where SVG pins during the split
+      const startScroll = heroTop + heroH - THRESHOLD * vh // image bottom reaches 50vh
+      const endScroll   = heroTop + heroH - fixedTop       // image bottom clears SVG top
 
-      if (scrollY <= startScroll) {
-        // Phase 1: title tracks image bottom, all white
+      if (imageBotVP > vh) {
+        // Phase 0: image bottom still below viewport — SVG waits at viewport bottom
         setS({
-          svgStyle: {
-            position: 'fixed',
-            top: heroH - scrollY - titleH,
-            left: 0,
-            opacity: Math.min(scrollY / fadeEnd, 1),
-          },
+          svgStyle: { position: 'fixed', top: vh - titleH, left: 0, opacity: 1 },
+          spacerH: 0,
+          clipYSvg: VIEWBOX_H,
+          landed: false,
+        })
+      } else if (scrollY <= startScroll) {
+        // Phase 1: SVG tracks image bottom from viewport bottom up to 50vh, all white
+        setS({
+          svgStyle: { position: 'fixed', top: imageBotVP - titleH, left: 0, opacity: 1 },
           spacerH: 0,
           clipYSvg: VIEWBOX_H,
           landed: false,
         })
       } else if (scrollY < endScroll) {
-        // Phase 2: title fixed, image slides away, split colour advances upward
-        const progress = (scrollY - startScroll) / (endScroll - startScroll)
-        // Image bottom relative to SVG top, mapped to SVG coordinate space
-        const imageBotVP = heroH - scrollY            // image bottom in viewport px
-        const clipYPx    = imageBotVP - fixedTop      // px from SVG top
-        const clipYSvg   = Math.max(0, Math.min(VIEWBOX_H, (clipYPx / titleH) * VIEWBOX_H))
+        // Phase 2: SVG fixed at 50vh, image slides away, split colour advances upward
+        const progress  = (scrollY - startScroll) / (endScroll - startScroll)
+        const clipYPx   = imageBotVP - fixedTop
+        const clipYSvg  = Math.max(0, Math.min(VIEWBOX_H, (clipYPx / titleH) * VIEWBOX_H))
 
         setS({
           svgStyle: { position: 'fixed', top: fixedTop, left: 0, opacity: 1 },
