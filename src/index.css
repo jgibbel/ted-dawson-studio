@@ -253,7 +253,7 @@ img {
 }
 
 .lightbox-overlay--light {
-  background: rgba(255, 255, 255, 0.96);
+  background: #ffffff;
 }
 
 .lightbox-overlay--light .lightbox-close,
