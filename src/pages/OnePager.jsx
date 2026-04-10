@@ -17,7 +17,7 @@ function Section({ id, title, children }) {
 const VIEWBOX_H = 110
 const THRESHOLD = 0.5   // image bottom triggers fall when it crosses this fraction of vh
 
-function useScrollEffect(heroRef, titleRef, onNavOpacity, restoringScroll) {
+function useScrollEffect(heroRef, titleRef, restoringScroll) {
   const [s, setS] = useState(() =>
     // If restoring a saved scroll position the page will land in phase 3.
     // Start there immediately so sections don't jump after the first paint.
@@ -37,8 +37,6 @@ function useScrollEffect(heroRef, titleRef, onNavOpacity, restoringScroll) {
       const vh      = window.innerHeight
       const scrollY = window.scrollY
 
-      // Nav fades in over the first 20% of the image height
-      onNavOpacity?.(Math.min(scrollY / (heroH * 0.2), 1))
       // Text fades in slower — by the time image bottom is ~10% above bottom of screen
       const fadeEnd = Math.max(heroH - vh * 0.9, heroH * 0.2)
 
@@ -92,19 +90,19 @@ function useScrollEffect(heroRef, titleRef, onNavOpacity, restoringScroll) {
       window.removeEventListener('scroll', update)
       window.removeEventListener('resize', update)
     }
-  }, [heroRef, titleRef, onNavOpacity])
+  }, [heroRef, titleRef])
 
   return s
 }
 
-export default function OnePager({ onNavOpacity }) {
+export default function OnePager() {
   const { hash } = useLocation()
   const navType  = useNavigationType()
   const heroRef  = useRef(null)
   const titleRef = useRef(null)
   // Peek at sessionStorage once at mount — non-null means we're restoring a back-nav position
   const [restoringScroll] = useState(() => sessionStorage.getItem('onepager-scroll') !== null)
-  const { svgStyle, spacerH, clipYSvg, landed } = useScrollEffect(heroRef, titleRef, onNavOpacity, restoringScroll)
+  const { svgStyle, spacerH, clipYSvg, landed } = useScrollEffect(heroRef, titleRef, restoringScroll)
 
   // On back-navigation, restore the exact scroll position saved before leaving
   useLayoutEffect(() => {

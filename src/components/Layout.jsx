@@ -10,20 +10,13 @@ const navLinks = [
   { hash: 'contact', label: 'Contact' },
 ]
 
-export default function Layout({ children, navOpacity }) {
+export default function Layout({ children }) {
   const [menuOpen, setMenuOpen] = useState(false)
-  const { hash, pathname } = useLocation()
-  const isHome = pathname === '/'
+  const { hash } = useLocation()
 
   return (
     <>
-      <nav
-        className="nav"
-        style={isHome && navOpacity !== undefined ? {
-          opacity: navOpacity,
-          pointerEvents: navOpacity < 0.05 ? 'none' : 'auto',
-        } : undefined}
-      >
+      <nav className="nav">
         <div className="nav-inner">
           <Link to="/" className="nav-logo" onClick={() => { setMenuOpen(false); window.scrollTo({ top: 0, behavior: 'instant' }) }}>
             <img src={`${import.meta.env.BASE_URL}assets/Ted+portrait-33746941.jpg`} alt="Ted Dawson Studio" className="nav-logo-img" />
@@ -52,7 +45,7 @@ export default function Layout({ children, navOpacity }) {
           </button>
         </div>
       </nav>
-      <main className={`page${isHome ? '' : ' page--offset'}`}>{children}</main>
+      <main className="page page--offset">{children}</main>
       <footer className="footer">
         <p>© {new Date().getFullYear()} Ted Dawson Studio · New York City</p>
       </footer>
