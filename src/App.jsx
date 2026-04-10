@@ -10,7 +10,7 @@ export default function App() {
   const [navOpacity, setNavOpacity] = useState(0)
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/ted-dawson-studio">
       <Layout navOpacity={navOpacity}>
         <Routes>
           <Route path="/" element={<OnePager onNavOpacity={setNavOpacity} />} />
